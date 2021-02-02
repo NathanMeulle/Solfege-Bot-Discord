@@ -6,6 +6,10 @@
 - [How to contribute](#How-to-contribute)
 
 
+## Team
+- [Meulle Nathan](https://github.com/NathanMeulle)
+
+
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 
