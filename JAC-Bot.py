@@ -4,9 +4,9 @@
 ################################################################################
 ################################################################################
 
-#Copyright © 2020 Nathan. All rights reserved.
+#Copyright © 2021 Nathan. All rights reserved.
 #@author Nathan
-#name : Botito1
+#name : JAC-BOT
 
 ## Imports
 import discord
@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import time
+import os
 
 ################################# Bot Discord ##################################
 
@@ -27,12 +28,16 @@ class Bot(discord.Client):
     delay_short = 4
 
     # Non Modifiable - Initialisation des variables
+    listen_for_mode=False
     listen_for_level=False
     listen_for_answer=False
+    start_ = False
     hauteur = 0
     niveau = 1
+    mode = 1
     t_debut = 0
     t_fin = 0
+    players = {}
 
 
     #constructeur
@@ -44,7 +49,6 @@ class Bot(discord.Client):
         '''
         Méthode créant l'image avec une note
         '''
-
         # Configuration
         plt.close('all')## Ferme les fenetres deja ouvertes
         plt.figure("Find the note !", figsize=(6,5))# création de la fenetre avec titre
@@ -96,7 +100,7 @@ class Bot(discord.Client):
         # Affichage
         plt.title("Find the note !")
         #Affichage de la clé de sol
-        image = plt.imread("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/gkey.png")
+        image = plt.imread("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/gkey.png")#Récupère la clé de sol
         ax = plt.gca()
         im = OffsetImage(image, zoom=0.15)
         artists = []
@@ -104,8 +108,7 @@ class Bot(discord.Client):
         artists.append(ax.add_artist(ab))
         self.hauteur = y
         # Enregistrement de l'image
-        plt.savefig("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/img")
-
+        plt.savefig(os.getcwd() +"/jac_img")
 
     '''
     Méthode vérifiant la réponse fournie
@@ -158,7 +161,7 @@ class Bot(discord.Client):
         embed.description = description
         embed.color = color
         if(img!=""):
-            embed.set_image(img)
+            embed.set_image(url=img)
         return embed
 
     '''
@@ -171,88 +174,93 @@ class Bot(discord.Client):
         print(self.user.id)
         print("------")
 
+
+    async def createQuestion(self, message):
+        # Question suivante
+        self.create_im_question()
+        self.listen_for_answer = True
+        await message.channel.send(file=discord.File(os.getcwd() +"/jac_img.png"))
+        #Réactivation du chrono
+        self.t_debut=time.time()
+
     '''
     Méthode appelée à chaque message envoyé sur le serveur ou le bot est présent
     '''
     async def on_message(self, message):
-        if(message.content.startswith("!stop")):
-            self.listen_for_level=False
-            self.listen_for_answer=False
-            return
-
-        if (message.content.startswith("!Hello")):
-            await message.channel.send("Commandes :\n - !play : commencer le jeu \n - !stop : arreter de jouer ")
+        if (message.content.startswith("!start")):
+            self.start_ = True
+            await message.channel.send("Bienvenue ! \nCommandes :\n - !play, \n - !help, \n - !stop")
 
 
         if(message.author == self.user):#Ignore les messages provenant du bot
             return
 
-        else :
-            #author
-            if("!author" in message.content or "!Copyright" in message.content):
-                await message.channel.send("Copyright © 2020 Nathan. All rights reserved.")
+        elif self.start_ :
+            #Stop
+            if(message.content.startswith("!stop")):
+                self.listen_for_level=False
+                self.listen_for_answer=False
+                self.start_ = False
+                await message.add_reaction("👋")
+                return
 
             #Aide
             if(message.content.startswith("!help")):
-                await message.channel.send("Commandes :\n - !play : commencer le jeu \n - !stop : arreter de jouer ")
+                intr = ""
+                cmd = "**Commandes :**\n - !play : commencer le jeu \n - !stop : arreter de jouer \n\n"
+                mds = "**Modes :** \n - Entrainement \n - Multijoueurs \n\n"
+                fmts = "**Formats des réponses :** si, Si, SI, B, b \n\n"
+                cnt = "Copyright © 2021 Nathan.\n"
+                await message.channel.send(intr + cmd + mds + fmts + cnt)
 
-            #Correction
-            if(self.listen_for_answer):
+            # Mode Entrainement
+            if(self.listen_for_answer and self.mode == 1):
                 self.t_fin = time.time()
                 txt = self.check_answer(str(message.content), self.t_fin - self.t_debut)
                 self.listen_for_answer = False
                 # await message.channel.send(txt) # reponse sous format texte classique
                 if(txt[0]=="B"):
+                    if not message.author in self.players:
+                        self.players[message.author] = 1
+                    else:
+                        self.players[message.author] += 1
                     embed = self.create_embed(txt, " ", discord.Colour(int("0x00FF00", 16)))
+
                 else:
-                    embed = self.create_embed(txt, " ", discord.Colour(int("0xFF0000", 16)))
+                    if(txt[0]=="T"):
+                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFFA500", 16)))
+                    else:
+                        self.players[message.author] = 0
+                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFF0000", 16)))
                 await message.channel.send(embed=embed)
-
-                # Question suivante
-                self.create_im_question()
-                self.listen_for_answer = True
-                await message.channel.send(file=discord.File("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/img.png"))
-                #Réactivation du chrono
-                self.t_debut=time.time()
-
+                await self.createQuestion(message)
+                print(self.players)
 
             if(self.listen_for_level):
                 self.niveau = int(message.content)
                 self.listen_for_level = False
-                await message.channel.send("Ok, let\'s go !")
+                await message.add_reaction("👌")
 
-                #Création de la question
-                self.create_im_question()
-                self.listen_for_answer = True
-                # Envoi de l'image
-                await message.channel.send(file=discord.File("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/img.png"))
+                await self.createQuestion(message)
 
-                #Activation du chrono
-                self.t_debut=time.time()
-
-
-            #Selection niveau
-            if(message.content.startswith("!play") or message.content.startswith("!jouer")):
+            if(self.listen_for_mode):
+                self.listen_for_mode = False
+                self.mode = int(message.content)
+                await message.add_reaction("👌")
                 await message.channel.send("Selectionner votre niveau : \n 1 (facile) \n 2 (dur) \n 3 (très dur)")
                 self.listen_for_level = True
 
-            #Message privé
-            if(message.content.startswith("!dm")):
-                member = discord.utils.get(message.guild.members, name=message.content.split(" ")[1])
 
-                try:
-                    await member.send("Hello, je suis reveillé ! C'est le moment de bosser ton solfège !")
-                    channel = discord.utils.get(message.guild.text_channels, name="solfege")
-                    await channel.send("!Hello")
+            #Selection mode
+            if(message.content.startswith("!play")):
+                await message.channel.send("Selectionner votre mode : \n 1 - Entrainement \n 2 - Multijoueurs")
+                self.listen_for_mode = True
 
-                except discord.Forbidden:
-                    member = discord.utils.get(message.guild.members, name="N9798")
-                    await member.send("erreur envoi message privé")
 
 
 if __name__== "__main__":
     bot = Bot()
-    bot.run("NzE0OTIwMTc5OTM0NTYwMzYy.XtU6fg.rtt7URKqWgTwtWqCRZmKU76o6Uk")#/!\Token a ne pas communiquer
+    bot.run("ODA2MjMyNjYyNjcwMDQ5MzQw.YBmcrQ.3ElavlJH0aD0vVNt6lmwvjR7Hu0")#/!\Token a ne pas communiquer
 
 
 
