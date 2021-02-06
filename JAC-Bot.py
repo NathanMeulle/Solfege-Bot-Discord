@@ -27,6 +27,8 @@ class Bot(discord.Client):
     # Modifiable :
     delay = 5
     delay_short = 4
+    NB_QUESTIONS = 4 # le nombre de questions pour le mode multijoueur
+
 
     # Non Modifiable - Initialisation des variables
     listen_for_mode=False
@@ -40,7 +42,6 @@ class Bot(discord.Client):
     t_fin = 0
     players = {}
     questions_counter = 1
-    NB_QUESTIONS = 4
     channel = None
 
 
@@ -104,7 +105,7 @@ class Bot(discord.Client):
         # Affichage
         plt.title("Find the note !")
         #Affichage de la clé de sol
-        image = plt.imread("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/gkey.png")#Récupère la clé de sol
+        image = plt.imread("./images/gkey.png")#Récupère la clé de sol
         ax = plt.gca()
         im = OffsetImage(image, zoom=0.15)
         artists = []
@@ -193,7 +194,7 @@ class Bot(discord.Client):
     async def on_reaction_add(self, reaction, user):
         if self.start_:
             if user != self.user and reaction.emoji == "💡":
-                await self.channel.send(file=discord.File("/Users/nathan/Documents/Polytech'Nice/SI3/Autre/Discord-Bot/help.jpg"))
+                await self.channel.send(file=discord.File("./images/help.jpg"))
                 self.t_debut=time.time()
 
 
@@ -203,7 +204,7 @@ class Bot(discord.Client):
         R = {k: v for k, v in sorted(self.players.items(), key=lambda item: item[1])}
         res = "**Classement :**\n"
         for k in range(min(3, len(self.players))):
-            res += (str(k+1) + " - " + list(R.keys())[k] + " (" + str(list(R.values())[k]) + ")\n")
+            res += (str(k+1) + " - " + list(R.keys())[k] + " (" + str(list(R.values())[k]) + "/"+str(self.NB_QUESTIONS) + ")\n")
         await message.channel.send(res)
 
 
@@ -296,7 +297,6 @@ class Bot(discord.Client):
             # Mode Multijoueurs
             if(self.listen_for_answer and self.mode == 2):
                 #print("Mode Multi")
-                print(*[self.t_debut, self.delay, time.time()])
                 if self.t_debut + self.delay >= time.time():
                     tmp = time.time()
                     txt = self.check_answer(str(message.content), tmp - self.t_debut)
