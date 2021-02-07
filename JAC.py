@@ -237,7 +237,7 @@ class Bot(discord.Client):
         if (message.content.startswith("!start")):
             self.start_ = True
             self.channel = message.channel
-            await message.channel.send("Bienvenue ! \nCommandes :\n - !play, \n - !help, \n - !stop")
+            await message.channel.send("**Bienvenue !** \nCommandes :\n - !play, \n - !help, \n - !stop")
 
 
         if(message.author == self.user):#Ignore les messages provenant du bot
@@ -333,6 +333,7 @@ class Bot(discord.Client):
                 self.niveau = int(message.content)
                 self.listen_for_level = False
                 await message.add_reaction("👌")
+                await message.channel.send("**" + str(self.NB_QUESTIONS) + " questions - " + str(self.delay) + " secondes pour répondre le plus vite possible - une réponse fausse fait perdre des points**")
                 await self.createQuestion(message)
 
             if(self.listen_for_mode):
