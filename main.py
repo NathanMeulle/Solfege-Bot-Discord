@@ -11,10 +11,8 @@
 
 
 from JAC import Bot
-from boto.s3.connection import S3Connection
-s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
-print(s3)
+
 
 if __name__== "__main__":
     bot = Bot()
-    bot.run("ODA2MjMyNjYyNjcwMDQ5MzQw.YBmcrQ.3ElavlJH0aD0vVNt6lmwvjR7Hu0")#/!\Token a ne pas communiquer
+    bot.run("ODA2MjMyNjYyNjcwMDQ5MzQw.YBmcrQ.LeknUWHffXsPMJr1koV9ofjzQPw")#/!\Token a ne pas communiquer
