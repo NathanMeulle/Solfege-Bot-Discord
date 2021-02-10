@@ -31,13 +31,14 @@ class Bot(discord.Client):
     # Modifiable :
     delay = 5
     delay_short = 4
-    NB_QUESTIONS = 5 # le nombre de questions pour le mode multijoueur
+    delay_short_short = 3
 
 
     # Non Modifiable - Initialisation des variables
     listen_for_mode=False
     listen_for_level=False
     listen_for_answer=False
+    listen_for_nbQuestion = False
     start_ = False
     hauteur = 0
     niveau = 1
@@ -49,6 +50,8 @@ class Bot(discord.Client):
     channel = None
     chrono = False
     classement_tmp = []
+    NB_QUESTIONS = 5 # nombre de questions mode multijoueur
+    switch = False #changement clé de fa
 
 
 
@@ -79,9 +82,10 @@ class Bot(discord.Client):
         x = 2
         if self.niveau==2:
             y = random.randint(-5,12) # note choisie de facon aléatoire niveau 2 (hors de la portée)
+            self.delay = self.delay_short #temps plus court
         elif self.niveau==3:
             y = random.randint(-9,19) # note choisie de facon aléatoire niveau 3 (hors de la portée - expert)
-            self.delay = self.delay_short #temps plus court
+            self.delay = self.delay_short_short #temps plus court
         else :
             y = random.randint(-2,9) # note choisie de facon aléatoire niveau 1 (sur la portée Do-Sol)
 
@@ -111,12 +115,19 @@ class Bot(discord.Client):
 
         # Affichage
         plt.title("Find the note !")
-        #Affichage de la clé de sol
-        image = plt.imread("./images/gkey.png")#Récupère la clé de sol
+        if not self.switch :
+            #Affichage de la clé de sol
+            image = plt.imread("./images/gkey.png")#Récupère la clé de sol
+            im = OffsetImage(image, zoom=0.15) #Resizing
+            ab = AnnotationBbox(im, (0.6, 4), xycoords='data', frameon=False) #positionnement
+        else :
+            #Affichage de la clé de fa
+            image = plt.imread("./images/fkey.png")#Récupère la clé de fa
+            im = OffsetImage(image, zoom=0.32)
+            ab = AnnotationBbox(im, (0.6, 4.7), xycoords='data', frameon=False)
+
         ax = plt.gca()
-        im = OffsetImage(image, zoom=0.15)
         artists = []
-        ab = AnnotationBbox(im, (0.6, 4), xycoords='data', frameon=False)
         artists.append(ax.add_artist(ab))
         self.hauteur = y
         # Enregistrement de l'image
@@ -128,6 +139,7 @@ class Bot(discord.Client):
     def check_answer(self, res, delay):
         # Réponses
         y=self.hauteur
+        if self.switch:y+=2
         notes_values=[]
         for i in range(7):
             notes_values.append([i-2+k*7 for k in range(-1,4)])
@@ -187,15 +199,16 @@ class Bot(discord.Client):
         print("------")
 
 
-    async def createQuestion(self, message):
+    async def createQuestion(self):
         # Question suivante
         self.create_im_question()
         self.listen_for_answer = True
-        message_img = await message.channel.send(file=discord.File(os.getcwd() +"/jac_img.png"))
+        message_img = await self.channel.send(file=discord.File(os.getcwd() +"/jac_img.png"))
         if self.niveau == 1:
             await message_img.add_reaction("💡")
         #Réactivation du chrono
         self.t_debut=time.time()
+        #Réinitialise le classement_tmp pour le mode mulitjoueur, propre à chaque question
         self.classement_tmp = []
 
 
@@ -206,8 +219,18 @@ class Bot(discord.Client):
         '''
         if self.start_:
             if user != self.user and reaction.emoji == "💡":
-                await self.channel.send(file=discord.File("./images/help.jpg"))
+                if not self.switch:
+                    await self.channel.send(file=discord.File("./images/ghelp.png")) #sol
+                else:
+                    await self.channel.send(file=discord.File("./images/fhelp.png")) #fa
+
                 self.t_debut=time.time()
+
+            if user != self.user and reaction.emoji == "⏩":
+                self.mode = 1
+                self.niveau = 1
+                await self.createQuestion()
+
 
 
 
@@ -215,17 +238,18 @@ class Bot(discord.Client):
         '''
         Affiche le classement des joueurs
         '''
-        print(self.players)
-        R = {k: v for k, v in sorted(self.players.items(), key=lambda item: item[1], reverse=True)}
+        #print(self.players)
+        R = {k: v for k, v in sorted(self.players.items(), key=lambda item: item[1])} #Trie les joueurs par classement croissant
         res = "**Classement :**\n"
-        for k in range(min(3, len(self.players))):
-            res += (str(k+1) + " - " + list(R.keys())[k] + " (" + str(list(R.values())[k]) + " points)\n")
+        l=len(self.players)-1
+        for k in range(l,  l-min(3,l+1), -1):
+            res += (str(l-k+1) + " - " + list(R.keys())[k] + " (" + str(list(R.values())[k]) + " points)\n")
         await message.channel.send(res)
 
 
     async def sendMeme(self, message, txtAnswer):
         score = self.players[message.author.name]
-        L = init_gif(score, txtAnswer)
+        L = init_gif(score, txtAnswer) # appelle à la méthode du fichier gif.py
         if len(L)>0:
             await message.channel.send(L[random.randint(0,len(L)-1)])
 
@@ -237,7 +261,8 @@ class Bot(discord.Client):
         if (message.content.startswith("!start")):
             self.start_ = True
             self.channel = message.channel
-            await message.channel.send("**Bienvenue !** \nCommandes :\n - !play, \n - !help, \n - !stop")
+            tmp = await message.channel.send("**Bienvenue !** \nCommandes principales :\n - !play, \n - !help, \n - !stop")
+            await tmp.add_reaction("⏩")
 
 
         if(message.author == self.user):#Ignore les messages provenant du bot
@@ -255,11 +280,17 @@ class Bot(discord.Client):
             #Aide
             if(message.content.startswith("!help") and not self.listen_for_answer):
                 intr = ""
-                cmd = "**Commandes :**\n - !play : commencer le jeu \n - !stop : arreter de jouer \n\n"
+                cmd = "**Commandes :**\n - !play : commencer le jeu \n - !switch : passer à la clé de fa \n - !stop : arreter de jouer \n\n"
                 mds = "**Modes :** \n - Entrainement \n - Multijoueurs \n\n"
                 fmts = "**Formats des réponses :** si, Si, SI, B, b \n\n"
                 cnt = "Copyright © 2021 Nathan.\n"
                 await message.channel.send(intr + cmd + mds + fmts + cnt)
+
+            #Switch clé de fa
+            if message.content.startswith("!switch"):
+                self.switch = not self.switch
+                await message.add_reaction("👌")
+
 
             # Mode Entrainement
             if(self.listen_for_answer and self.mode == 1):
@@ -277,16 +308,16 @@ class Bot(discord.Client):
 
 
                 else:
-                    if(txt[0]=="T"):
+                    if(txt[0]=="T"): # si réponse correcte
                         if not message.author.name in self.players:
                             self.players[message.author.name] = 0
-                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFFA500", 16)))
+                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFFA500", 16))) # création d'un embed vert
                     else:
                         self.players[message.author.name] = 0
-                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFF0000", 16)))
-                await message.channel.send(embed=embed)
+                        embed = self.create_embed(txt, " ", discord.Colour(int("0xFF0000", 16))) # création d'un enbed rouge
+                await message.channel.send(embed=embed) # envoi de l'embed
                 await self.sendMeme(message, txt[0])
-                await self.createQuestion(message)
+                await self.createQuestion()
 
 
 
@@ -315,11 +346,11 @@ class Bot(discord.Client):
                 if not self.chrono:
                     try:
                         self.chrono = True
-                        reaction, user = await discord.Client().wait_for('reaction_add', timeout=5.0)
-                    except asyncio.TimeoutError:
+                        reaction, user = await discord.Client().wait_for('reaction_add', timeout=self.delay)
+                    except asyncio.TimeoutError:#après 5 secondes, envoi de la question suivante
                         self.questions_counter += 1
                         if self.questions_counter <= self.NB_QUESTIONS:
-                            await self.createQuestion(message)
+                            await self.createQuestion()
                             self.chrono = False
                         else :
                             self.chrono = False
@@ -333,17 +364,32 @@ class Bot(discord.Client):
                 self.niveau = int(message.content)
                 self.listen_for_level = False
                 await message.add_reaction("👌")
-                await message.channel.send("**" + str(self.NB_QUESTIONS) + " questions - " + str(self.delay) + " secondes pour répondre le plus vite possible - une réponse fausse fait perdre des points**")
-                await self.createQuestion(message)
+                if self.niveau == 3: self.delay = self.delay_short_short
+                if self.niveau == 2: self.delay = self.delay_short
+                if self.mode == 2:
+                    await message.channel.send("**" + str(self.NB_QUESTIONS) + " questions - " + str(self.delay) + " secondes pour répondre le plus vite possible - une réponse fausse fait perdre des points**")
+                await self.createQuestion()
+
+            if(self.listen_for_nbQuestion):
+                self.NB_QUESTIONS = int(message.content)
+                await message.add_reaction("👌")
+                self.listen_for_nbQuestion = False
+                await message.channel.send("**Niveau :** \n 1 - facile \n 2 - dur \n 3 - très dur")
+                self.listen_for_level = True
+
 
             if(self.listen_for_mode):
                 self.listen_for_mode = False
                 self.mode = int(message.content)
                 self.questions_counter = 1
                 await message.add_reaction("👌")
-                players = {} # reinitialise le dico players
-                await message.channel.send("**Niveau :** \n 1 - facile \n 2 - dur \n 3 - très dur")
-                self.listen_for_level = True
+                self.players = {} # reinitialise le dico players
+                if self.mode == 2:
+                    await message.channel.send("Nombre de questions ?")
+                    self.listen_for_nbQuestion = True
+                else:
+                    await message.channel.send("**Niveau :** \n 1 - facile \n 2 - dur \n 3 - très dur")
+                    self.listen_for_level = True
 
 
             #Selection mode
