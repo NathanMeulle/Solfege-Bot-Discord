@@ -18,8 +18,6 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import time
 import os
 import asyncio
-import threading
-
 
 from gif import init_gif
 
@@ -176,10 +174,11 @@ class Bot(discord.Client):
 
 ## Partie Bot
 
-    '''
-    Création d'embed
-    '''
+
     def create_embed(self, title, description, color, img=""):
+        '''
+        Création d'embed
+        '''
         embed = discord.Embed()
         embed.title=title
         embed.description = description
@@ -188,10 +187,10 @@ class Bot(discord.Client):
             embed.set_image(url=img)
         return embed
 
-    '''
-    Méthode appelée au lancement du bot
-    '''
     async def on_ready(self):
+        '''
+        Méthode appelée au lancement du bot
+        '''
         print("Ready !")
         print("Logged in as ")
         print(self.user.name)
@@ -226,7 +225,7 @@ class Bot(discord.Client):
 
                 self.t_debut=time.time()
 
-            if user != self.user and reaction.emoji == "⏩":
+            if user != self.user and reaction.emoji == "⏩":# Raccourci lançant directement les questions
                 self.mode = 1
                 self.niveau = 1
                 await self.createQuestion()
@@ -242,30 +241,34 @@ class Bot(discord.Client):
         R = {k: v for k, v in sorted(self.players.items(), key=lambda item: item[1])} #Trie les joueurs par classement croissant
         res = "**Classement :**\n"
         l=len(self.players)-1
-        for k in range(l,  l-min(3,l+1), -1):
+        for k in range(l,  l-min(3,l+1), -1): #récupère les 3 joueurs avec le plus de points
             res += (str(l-k+1) + " - " + list(R.keys())[k] + " (" + str(list(R.values())[k]) + " points)\n")
         await message.channel.send(res)
 
 
     async def sendMeme(self, message, txtAnswer):
+        '''
+        Envoi un gif en fonction de la réponse
+        '''
         score = self.players[message.author.name]
         L = init_gif(score, txtAnswer) # appelle à la méthode du fichier gif.py
         if len(L)>0:
             await message.channel.send(L[random.randint(0,len(L)-1)])
 
-    '''
-    Méthode appelée à chaque message envoyé sur le serveur ou le bot est présent
-    '''
-    async def on_message(self, message):
 
-        if (message.content.startswith("!start")):
+    async def on_message(self, message):
+        '''
+        Méthode appelée à chaque message envoyé sur le serveur où le bot est présent
+        '''
+        #Start
+        if (message.content.startswith("!start")): #démarre le bot
             self.start_ = True
             self.channel = message.channel
             tmp = await message.channel.send("**Bienvenue !** \nCommandes principales :\n - !play, \n - !help, \n - !stop")
             await tmp.add_reaction("⏩")
 
 
-        if(message.author == self.user):#Ignore les messages provenant du bot
+        if(message.author == self.user):#Ignore les messages provenant du bot lui-même
             return
 
         elif self.start_ :
@@ -360,8 +363,8 @@ class Bot(discord.Client):
                         await self.channel.send(file=discord.File("./images/help.jpg"))
 
 
-            if(self.listen_for_level):
-                self.niveau = int(message.content)
+            if(self.listen_for_level): # attend le choix du niveau
+                self.niveau = int(message.content) #récupère le contenu du message
                 self.listen_for_level = False
                 await message.add_reaction("👌")
                 if self.niveau == 3: self.delay = self.delay_short_short
@@ -370,7 +373,7 @@ class Bot(discord.Client):
                     await message.channel.send("**" + str(self.NB_QUESTIONS) + " questions - " + str(self.delay) + " secondes pour répondre le plus vite possible - une réponse fausse fait perdre des points**")
                 await self.createQuestion()
 
-            if(self.listen_for_nbQuestion):
+            if(self.listen_for_nbQuestion): # attend le choix du nombre de question
                 self.NB_QUESTIONS = int(message.content)
                 await message.add_reaction("👌")
                 self.listen_for_nbQuestion = False
@@ -378,7 +381,7 @@ class Bot(discord.Client):
                 self.listen_for_level = True
 
 
-            if(self.listen_for_mode):
+            if(self.listen_for_mode): # attend le choix du mode
                 self.listen_for_mode = False
                 self.mode = int(message.content)
                 self.questions_counter = 1
