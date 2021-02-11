@@ -40,7 +40,7 @@ class Bot(discord.Client):
     start_ = False
     hauteur = 0
     niveau = 1
-    mode = 1
+    mode = None
     t_debut = 0
     t_fin = 0
     players = {}
@@ -214,7 +214,7 @@ class Bot(discord.Client):
 
     async def on_reaction_add(self, reaction, user):
         '''
-        Ajoute une image d'aide en cas de réaction (pour le niveau 1)
+        Actions suite à l'ajout d'une réaction
         '''
         if self.start_:
             if user != self.user and reaction.emoji == "💡":
@@ -225,11 +225,20 @@ class Bot(discord.Client):
 
                 self.t_debut=time.time()
 
-            if user != self.user and reaction.emoji == "⏩":# Raccourci lançant directement les questions
+
+            if user != self.user and reaction.emoji == "🔄":# Raccourci passant à la clé de fa
+                self.switch = not self.switch
+
+            if user != self.user and reaction.emoji == "⏩" and not self.mode==2:# Raccourci lançant directement les questions
                 self.mode = 1
                 self.niveau = 1
                 await self.createQuestion()
 
+            if user != self.user and reaction.emoji == "🙌" and not self.mode==1:# Raccourci lançant directement les questions
+                self.mode = 2
+                self.niveau = 2
+                self.NB_QUESTIONS = 10
+                await self.createQuestion()
 
 
 
@@ -255,6 +264,12 @@ class Bot(discord.Client):
         if len(L)>0:
             await message.channel.send(L[random.randint(0,len(L)-1)])
 
+    def reInitialise(self):
+        self.listen_for_level=False
+        self.listen_for_answer=False
+        self.start_ = False
+        self.switch = False
+        self.mode = None
 
     async def on_message(self, message):
         '''
@@ -262,21 +277,26 @@ class Bot(discord.Client):
         '''
         #Start
         if (message.content.startswith("!start")): #démarre le bot
-            self.start_ = True
             self.channel = message.channel
-            tmp = await message.channel.send("**Bienvenue !** \nCommandes principales :\n - !play, \n - !help, \n - !stop")
+            self.reInitialise()
+            self.start_ = True
+            tmp = await message.channel.send("**Bienvenue !** \nCommandes principales :\n - !play, \n - !help, \n - !stop \n\n 🔄 : clé de Fa, ⏩ : entrainement direct, 🙌 : multi direct")
+            await tmp.add_reaction("🔄")
             await tmp.add_reaction("⏩")
+            await tmp.add_reaction("🙌")
+
 
 
         if(message.author == self.user):#Ignore les messages provenant du bot lui-même
             return
 
+        if(message.channel != self.channel):#Ignore les messages provenant d'autre channel
+            return
+
         elif self.start_ :
             #Stop
             if(message.content.startswith("!stop")):
-                self.listen_for_level=False
-                self.listen_for_answer=False
-                self.start_ = False
+                self.reInitialise()
                 await message.add_reaction("👋")
                 return
 
