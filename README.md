@@ -13,6 +13,10 @@ JAC-Bot is a bot created to learn solfege.
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
 
+<p float="left">
+  <img src="https://github.com/NathanMeulle/Solfege-Bot-Discord/blob/main/images/preview.jpg" width="1100">
+</p>
+
 ## Team
 - [Meulle Nathan](https://github.com/NathanMeulle)
 
