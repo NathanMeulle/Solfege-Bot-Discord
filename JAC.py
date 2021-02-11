@@ -380,7 +380,11 @@ class Bot(discord.Client):
                             self.listen_for_answer = False
                             await self.displayResult(message)
                     else:
-                        await self.channel.send(file=discord.File("./images/help.jpg"))
+                        # en cas de réactions, envoi de l'image d'aide
+                        if not self.switch:
+                            await self.channel.send(file=discord.File("./images/ghelp.png")) #sol
+                        else:
+                            await self.channel.send(file=discord.File("./images/fhelp.png")) #fa
 
 
             if(self.listen_for_level): # attend le choix du niveau
