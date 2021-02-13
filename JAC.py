@@ -196,6 +196,7 @@ class Bot(discord.Client):
         print(self.user.name)
         print(self.user.id)
         print("------")
+        await self.change_presence(activity=discord.Game(name="JAC with !start"))
 
 
     async def createQuestion(self):
@@ -240,6 +241,13 @@ class Bot(discord.Client):
                 self.NB_QUESTIONS = 10
                 await self.createQuestion()
 
+    async def on_raw_reaction_remove(self, payload):
+        '''
+        Actions suite à la suppression d'une réaction
+        '''
+        if self.start_:
+            if payload.emoji.name == "🔄":# Raccourci passant à la clé de fa
+                self.switch = not self.switch
 
 
     async def displayResult(self, message):
@@ -279,11 +287,11 @@ class Bot(discord.Client):
         if (message.content.startswith("!start")): #démarre le bot
             self.channel = message.channel
             self.reInitialise()
-            self.start_ = True
             tmp = await message.channel.send("**Bienvenue !** \nCommandes principales :\n - !play, \n - !help, \n - !stop \n\n 🔄 : clé de Fa, ⏩ : entrainement direct, 🙌 : multi direct")
             await tmp.add_reaction("🔄")
             await tmp.add_reaction("⏩")
             await tmp.add_reaction("🙌")
+            self.start_ = True
 
 
 
