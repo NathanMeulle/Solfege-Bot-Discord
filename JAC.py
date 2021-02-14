@@ -111,7 +111,7 @@ class Bot(discord.Client):
                     plt.plot([x-0.4,x+0.4], [tmp+1, tmp+1], color="black")
                     tmp+=2
 
-        # Affichage
+        # Ajout clé
         plt.title("Find the note !")
         if not self.switch :
             #Affichage de la clé de sol
@@ -123,6 +123,13 @@ class Bot(discord.Client):
             image = plt.imread("./images/fkey.png")#Récupère la clé de fa
             im = OffsetImage(image, zoom=0.32)
             ab = AnnotationBbox(im, (0.6, 4.7), xycoords='data', frameon=False)
+
+        # Ajout icon
+        image = plt.imread("./images/icon.jpg")#Récupère la clé de sol
+        im = OffsetImage(image, zoom=0.04) #Resizing
+        ab = AnnotationBbox(im, (5.5, 20), xycoords='data', frameon=False) #positionnement
+
+
 
         ax = plt.gca()
         artists = []
