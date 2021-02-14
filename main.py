@@ -31,7 +31,7 @@ if __name__== "__main__":
     # bot.run(os.getenv("TOKEN"))#/!\Token a ne pas communiquer
 
     # sur serveur
-    bot.run(os.environ("TOKEN"))#/!\Token a ne pas communiquer
+    bot.run(os.getenv("TOKEN"))#/!\Token a ne pas communiquer
 
 
 
