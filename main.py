@@ -11,7 +11,6 @@
 
 
 from JAC import Bot
-from dotenv import load_dotenv
 import os
 
 
@@ -27,6 +26,7 @@ if __name__== "__main__":
     # # ou bien dans un fichier config (même répertoire, pas d'extension)
     # # écrire juste
     # # TOKEN=...
+    # from dotenv import load_dotenv
     # load_dotenv(dotenv_path="config") # charge le fichier config
     # bot.run(os.getenv("TOKEN"))#/!\Token a ne pas communiquer
 
