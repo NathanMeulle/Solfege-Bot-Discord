@@ -125,9 +125,9 @@ class Bot(discord.Client):
             ab = AnnotationBbox(im, (0.6, 4.7), xycoords='data', frameon=False)
 
         # Ajout icon
-        image = plt.imread("./images/icon.jpg")#Récupère la clé de sol
-        im = OffsetImage(image, zoom=0.04) #Resizing
-        ab = AnnotationBbox(im, (5.5, 20), xycoords='data', frameon=False) #positionnement
+        # image = plt.imread("./images/icon.jpg")#Récupère la clé de sol
+        # im = OffsetImage(image, zoom=0.04) #Resizing
+        # ab = AnnotationBbox(im, (5.5, 20), xycoords='data', frameon=False) #positionnement
 
 
 
