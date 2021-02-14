@@ -4,11 +4,10 @@
 - [Presentation](#Presentation)
 - [Team](#Team)
 - [How to install](#How-to-install)
-- [How to launch](#How-to-launch)
-
 
 ## Presentation
 JAC-Bot is a bot created to learn solfege.
+[![Heroku](https://heroku-badge.herokuapp.com/?app=jacc-bot-app)]
 
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
@@ -21,6 +20,11 @@ JAC-Bot is a bot created to learn solfege.
 - [Meulle Nathan](https://github.com/NathanMeulle)
 
 ## How to install
+
+### Easy option
+click on this link to directly add the bot to server : [https://discord.com/api/oauth2/authorize?bot](https://discord.com/api/oauth2/authorize?client_id=806232662670049340&permissions=51264&scope=bot) 
+
+### Other Method
 1. Clone this repository using this command in a terminal
 ```
 git clone https://github.com/NathanMeulle/Solfege-Bot-Discord.git
@@ -37,15 +41,10 @@ git clone https://github.com/NathanMeulle/Solfege-Bot-Discord.git
 
 1. You can now see the bot in your server !  
 
-## How to launch
-### Locally
-- In a terminal, place yourself in the folder *Solfege-Bot-Discord*
+1. In a terminal, place yourself in the folder *Solfege-Bot-Discord*
 ``` cd Solfege-Bot-Discord```
 
-- Launch the code with ```python main.py```
-
-### On a server
-- Have a look at [Heroku](https://www.heroku.com)
+1. Launch the code with ```python main.py```
 
 ## 
 
